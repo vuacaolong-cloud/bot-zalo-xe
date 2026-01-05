@@ -4,51 +4,41 @@ import fetch from "node-fetch";
 const app = express();
 app.use(express.json());
 
-// ================== TELEGRAM CONFIG ==================
-const TELEGRAM_TOKEN = "AAGkjrj2yz7SQ8iZe8OeJuFj9HrcvCKHGH4";
-const TELEGRAM_API = `https://api.telegram.org/bot${TELEGRAM_TOKEN}`;
-
-// ================== TEST SERVER ==================
+// Trang test xem server sống
 app.get("/", (req, res) => {
-  res.send("BOT TELEGRAM XE IS RUNNING");
+  res.send("TELEGRAM BOT IS RUNNING");
 });
 
-// ================== TELEGRAM WEBHOOK ==================
+// Nhận update từ Telegram webhook
 app.post("/telegram", async (req, res) => {
-  const message = req.body.message;
+  console.log("TELEGRAM UPDATE:", JSON.stringify(req.body));
 
-  if (!message || !message.text) {
-    return res.sendStatus(200);
-  }
+  const message = req.body.message || req.body.edited_message;
+  if (!message || !message.text) return res.sendStatus(200);
 
   const chatId = message.chat.id;
-  const text = message.text.trim();
+  const text = message.text.toLowerCase();
 
-  let reply = "Lệnh không hợp lệ";
+  let reply = "❓ Mình chưa hiểu. Gõ /menu để xem lệnh.";
 
-  if (text === "/start" || text === "/menu") {
+  if (text.includes("menu") || text.includes("start")) {
     reply =
       "🚗 MENU QUẢN LÝ XE\n" +
-      "• Gõ: /xe <số xe>\n" +
-      "Ví dụ: /xe 222\n\n" +
-      "• Gõ: /chotthang mm/yyyy\n" +
+      "• /xe <số xe> (vd: /xe 222)\n" +
+      "• /chotthang mm/yyyy\n" +
       "Ví dụ: /chotthang 01/2026";
   }
 
-  await fetch(`${TELEGRAM_API}/sendMessage`, {
+  // Gửi tin nhắn trả lời
+  await fetch(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      chat_id: chatId,
-      text: reply,
-    }),
+    body: JSON.stringify({ chat_id: chatId, text: reply }),
   });
 
   res.sendStatus(200);
 });
 
-// ================== START SERVER ==================
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log("Server running on port", PORT);
-});
+// Start server (Render tự cấp PORT)
+const PORT = process.env.PORT || 10000;
+app.listen(PORT, () => console.log("Server running on port", PORT));
